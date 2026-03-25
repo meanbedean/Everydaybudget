@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Environment variables (keep secrets out of git)
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+
+# Python venv (unused in this project)
+.venv/
+
+# Editor
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
