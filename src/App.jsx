@@ -80,6 +80,7 @@ export default function App() {
   const [editingEntry, setEditingEntry] = useState(null);
   const [editAmount, setEditAmount]     = useState("");
   const [editCategory, setEditCategory] = useState("");
+  const [toast, setToast] = useState(null);
 
   const pieRef  = useRef();
   const lineRef = useRef();
@@ -134,10 +135,22 @@ export default function App() {
     fetchExpenses();
   };
 
+  // ── Toast ───────────────────────────────────────────────
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   // ── Delete ──────────────────────────────────────────────
   const deleteExpense = async (id) => {
-    await supabase.from("expenses").delete().eq("id", id);
-    fetchExpenses();
+    setExpenses(prev => prev.filter(e => e.id !== id));
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (error) {
+      showToast("Failed to delete entry: " + error.message, "error");
+      fetchExpenses();
+    } else {
+      showToast("Entry deleted successfully");
+    }
   };
 
   // ── Edit ────────────────────────────────────────────────
@@ -149,12 +162,17 @@ export default function App() {
 
   const saveEdit = async () => {
     if (!editAmount || !editCategory) return;
-    await supabase.from("expenses").update({
+    const { error } = await supabase.from("expenses").update({
       amount: parseFloat(editAmount),
       category: editCategory,
     }).eq("id", editingEntry.id);
-    setEditingEntry(null);
-    fetchExpenses();
+    if (error) {
+      showToast("Failed to update entry: " + error.message, "error");
+    } else {
+      setEditingEntry(null);
+      showToast("Entry updated successfully");
+      fetchExpenses();
+    }
   };
 
   // ── Filter & aggregate ───────────────────────────────────
@@ -250,6 +268,29 @@ export default function App() {
   // ── UI ───────────────────────────────────────────────────
   return (
     <div style={{ minHeight: "100vh", background: C.bg, padding: "32px 24px" }}>
+
+      {/* ── Toast ── */}
+      {toast && (
+        <div style={{
+          position: "fixed", top: 24, right: 24, zIndex: 200,
+          background: toast.type === "error" ? "rgba(239,68,68,0.12)" : "rgba(52,211,153,0.12)",
+          border: `1px solid ${toast.type === "error" ? "rgba(239,68,68,0.4)" : "rgba(52,211,153,0.4)"}`,
+          borderRadius: 12,
+          padding: "14px 20px",
+          fontSize: 13,
+          color: toast.type === "error" ? "#f87171" : "#34d399",
+          backdropFilter: "blur(8px)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          display: "flex", alignItems: "center", gap: 10,
+          maxWidth: 340,
+        }}>
+          <div style={{
+            width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
+            background: toast.type === "error" ? "#f87171" : "#34d399",
+          }} />
+          {toast.message}
+        </div>
+      )}
       <div style={{ maxWidth: 1000, margin: "0 auto" }}>
 
         {/* ── Header ── */}
