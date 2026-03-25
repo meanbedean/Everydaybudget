@@ -19,3 +19,8 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+
+# Large assets (upload manually or use Git LFS)
+src/*.png
+src/*.jpg
+src/*.jpeg
