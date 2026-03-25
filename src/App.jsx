@@ -108,6 +108,7 @@ export default function App() {
     const { data } = await supabase
       .from("expenses")
       .select("*")
+      .eq("user_id", user?.id)
       .order("created_at", { ascending: false });
     setExpenses(data || []);
   };
@@ -144,9 +145,16 @@ export default function App() {
   // ── Delete ──────────────────────────────────────────────
   const deleteExpense = async (id) => {
     setExpenses(prev => prev.filter(e => e.id !== id));
-    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    const { error, count } = await supabase
+      .from("expenses")
+      .delete({ count: "exact" })
+      .eq("id", id)
+      .eq("user_id", user?.id);
     if (error) {
-      showToast("Failed to delete entry: " + error.message, "error");
+      showToast("Failed to delete: " + error.message, "error");
+      fetchExpenses();
+    } else if (count === 0) {
+      showToast("Delete blocked — check Supabase RLS policies", "error");
       fetchExpenses();
     } else {
       showToast("Entry deleted successfully");
